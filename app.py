@@ -106,9 +106,9 @@ async def setup_openai_realtime(system_prompt: str):
 def auth_callback(username: str, password: str):
     # Fetch the user matching username from your database
     # and compare the hashed password with the value stored in the database
-    if (username, password) == ("raj", "pass123"):
+    if (username, password) == ("juan", "1231"):
         return cl.User(
-            identifier="raj", metadata={"role": "admin", "provider": "credentials"}
+            identifier="Juan", metadata={"role": "admin", "provider": "credentials"}
         )
     else:
         return None

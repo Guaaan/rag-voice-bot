@@ -9,3 +9,4 @@ azure-identity==1.19.0
 azure-search-documents
 azure-cognitiveservices-speech
 aiohttp
+torch
