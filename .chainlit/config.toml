@@ -87,7 +87,7 @@ cot = "full"
     #paper = "#FFFFFF"
 
     [UI.theme.light.primary]
-        #main = "#F80061"
+        #main = "#007cba"
         #dark = "#980039"
         #light = "#FFE7EB"
     [UI.theme.light.text]
@@ -100,7 +100,7 @@ cot = "full"
     #paper = "#FFFFFF"
 
     [UI.theme.dark.primary]
-        #main = "#F80061"
+        #main = "#007cba"
         #dark = "#980039"
         #light = "#FFE7EB"
     [UI.theme.dark.text]
