@@ -56,11 +56,11 @@ default_collapse_content = true
 cot = "full"
 
 # Link to your github repo. This will add a github button in the UI's header.
-# github = ""
+# github = "https://github.com/Guaaan/rag-voice-bot"
 
 # Specify a CSS file that can be used to customize the user interface.
 # The CSS file can be served from the public directory or via an external link.
-# custom_css = "/public/test.css"
+custom_css = "/public/test.css"
 
 # Specify a Javascript file that can be used to customize the user interface.
 # The Javascript file can be served from the public directory.
@@ -88,8 +88,8 @@ cot = "full"
 
     [UI.theme.light.primary]
         #main = "#007cba"
-        #dark = "#980039"
-        #light = "#FFE7EB"
+        #dark = "#1c0098"
+        #light = "#bacfff"
     [UI.theme.light.text]
         #primary = "#212121"
         #secondary = "#616161"
@@ -101,8 +101,8 @@ cot = "full"
 
     [UI.theme.dark.primary]
         #main = "#007cba"
-        #dark = "#980039"
-        #light = "#FFE7EB"
+        #dark = "#1c0098"
+        #light = "#bacfff"
     [UI.theme.dark.text]
         #primary = "#EEEEEE"
         #secondary = "#BDBDBD"

@@ -1,0 +1,15 @@
+.css-1ecxs1h {
+      background-color: rgb(0, 116, 248) !important;
+}
+
+.css-1ruedog {
+      color: rgb(0, 116, 248) !important;
+      border-color: rgba(0, 116, 248, 0.5) !important;
+}
+
+.css-1vhtqje {
+      color: rgb(0, 116, 248) ;
+      transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgb(206, 221, 255) !important;
+      background-color: rgb(255, 166, 198) !important;
+}
