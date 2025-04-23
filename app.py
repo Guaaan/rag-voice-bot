@@ -137,7 +137,7 @@ async def start():
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    system_prompt = """You're a customer support voice bot . Be consise in your response and speak in <customer_language> language always. """    
+    system_prompt = """Eres un bot de voz de atención al cliente. Sé conciso en tus respuestas y habla siempre en el idioma <customer_language>. """    
 
     cl.user_session.set("useAzureVoice", settings["useAzureVoice"])
     cl.user_session.set("Temperature", settings["Temperature"])
@@ -145,7 +145,7 @@ async def setup_agent(settings):
     app_user = cl.user_session.get("user")
     identifier = app_user.identifier if app_user else "admin"
     await cl.Message(
-        content="Hi, Welcome to ShopMe. How can I help you?. Press `P` to talk!"
+        content="Hola Bienvenido al bot ITAM. Cómo puedo ayudarte?. Presiona `P` para hablar!"
     ).send()
     system_prompt = system_prompt.replace("<customer_language>", settings["Language"])
     await setup_openai_realtime(system_prompt=system_prompt + "\n\n Customer ID: 12121")
