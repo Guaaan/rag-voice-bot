@@ -23,7 +23,7 @@ fetch_relevant_documents_def = {
       "properties": {
         "query": {
           "type": "string",
-          "description": "query for which documents are to be fetched"
+          "description": "search for infor in the documents related to IA models ",
         }
       },
       "required": ["query"]
