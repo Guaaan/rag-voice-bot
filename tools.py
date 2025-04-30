@@ -12,32 +12,35 @@ import os
 search_client = SearchClient(
     endpoint=os.environ["AZURE_SEARCH_ENDPOINT"],
     index_name=os.environ["INDEX_NAME"],
-    credential=AzureKeyCredential(os.environ["AZURE_SEARCH_KEY"]) 
+    credential=AzureKeyCredential(os.environ["AZURE_SEARCH_KEY"])
 )
 
 fetch_relevant_documents_def = {
     "name": "fetch_relevant_documents",
-    "description": "Fetch relevant documents for a query",
+    "description": "Busca en la base de conocimientos. Está en español y en formato CSV. Cada fila representa un empleado con hasta 3 contactos de emergencia, incluyendo nombre, parentesco y teléfono. Trata valores vacíos o 'n/a' como datos faltantes.",
     "parameters": {
-      "type": "object",
-      "properties": {
-        "query": {
-          "type": "string",
-          "description": "search for infor in the documents related to IA models ",
-        }
-      },
-      "required": ["query"]
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Busca en la base de conocimientos. Está en español y en formato CSV. Cada fila representa un empleado con hasta 3 contactos de emergencia, incluyendo nombre, parentesco y teléfono. Trata valores vacíos como datos faltantes.",
+            }
+        },
+        "required": ["query"]
     }
 }
-  
+
+
 async def fetch_relevant_documents_handler(params):
+    print(f"searching for {params['query']} in the knowledge base")
     query = params['query']
     search_results = search_client.search(
         search_text=query,
         top=5,
         select="content"
     )
-    sources_formatted = "\n".join([f'{document["content"]}' for document in search_results])
+    sources_formatted = "\n".join(
+        [f'{document["content"]}' for document in search_results])
     return sources_formatted
 
 # Tools list
