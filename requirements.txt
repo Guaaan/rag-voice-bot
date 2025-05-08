@@ -10,5 +10,6 @@ azure-search-documents
 azure-cognitiveservices-speech
 aiohttp
 chainlit
+python-dotenv
 torch
 torchaudio

@@ -1,18 +1,29 @@
-# Usa una imagen base oficial de Python
-FROM python:3.13.3-bookworm
+# Usa una imagen base con una versión más reciente de glibc
+FROM python:3.12-slim-bullseye
 
-# Establece el directorio de trabajo dentro del contenedor
+# Variables de entorno
+ENV HOST=0.0.0.0
+ENV LISTEN_PORT=8000
+
+# Establece el directorio de trabajo
+# Install system dependencies
+RUN apt-get update && apt-get install -y libgomp1 && rm -rf /var/lib/apt/lists/*
+
+# Rest of your Dockerfile (copy requirements, install Python packages, etc.)
 WORKDIR /app
-
-# Copia los archivos de requisitos y el código fuente al contenedor
-COPY requirements.txt ./
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 COPY . .
+COPY .env ./
+COPY app.py ./  
+# COPY realtime/ /app/realtime/
+# COPY azure_tts.py /app/
+# COPY VAD/ /app/VAD/
+# COPY tools.py ./  
+# Asegúrate de incluir el directorio tools
 
-# Instala las dependencias
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Expone el puerto en el que se ejecutará la aplicación
 EXPOSE 8000
+# Instala las dependencias de Python
 
-# Comando por defecto para ejecutar la aplicación
-CMD ["chainlit", "run", ,"-h", "app.py", "--host", "0.0.0.0", "--port", "8000"]
+# Comando para ejecutar la aplicación
+CMD ["chainlit", "run", "app.py", "--host", "0.0.0.0", "--port", "8000"]

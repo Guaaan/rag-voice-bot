@@ -23,6 +23,12 @@ from azure.core.credentials import AzureKeyCredential
 from azure.core.credentials_async import AsyncTokenCredential
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 import torch
+
+from dotenv import load_dotenv
+
+# Cargar las variables de entorno desde el archivo .env
+load_dotenv()
+
 vad_model, _ = torch.hub.load("snakers4/silero-vad", "silero_vad")
 
 def float_to_16bit_pcm(float32_array):
