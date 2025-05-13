@@ -22,7 +22,7 @@ search_client = SearchClient(
 
 fetch_relevant_documents_def = {
     "name": "fetch_relevant_documents",
-    "description": "Busca en la base de conocimientos. Está en español y en formato CSV. Cada fila representa un empleado con hasta 3 contactos de emergencia, incluyendo nombre, parentesco y teléfono. Trata valores vacíos o 'n/a' como datos faltantes.",
+    "description": "Busca en la base de conocimientos, Está en español. Cada fila representa un empleado con hasta 3 contactos de emergencia, incluyendo nombre, parentesco y teléfono. Trata valores vacíos o 'n/a' como datos faltantes.",
     "parameters": {
         "type": "object",
         "properties": {

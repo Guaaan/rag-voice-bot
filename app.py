@@ -9,7 +9,7 @@ from chainlit.logger import logger
 from realtime import RealtimeClient
 from azure_tts import Client as AzureTTSClient
 from tools import tools
-voice = "en-US-AlloyTurboMultilingualNeural"
+voice = "es-AR-AlloyTurboMultilingualNeural"
 
 VOICE_MAPPING = {
     "english": "en-IN-AnanyaNeural",
@@ -106,9 +106,9 @@ async def setup_openai_realtime(system_prompt: str):
 def auth_callback(username: str, password: str):
     # Fetch the user matching username from your database
     # and compare the hashed password with the value stored in the database
-    if (username, password) == ("juan", "1231"):
+    if (username, password) == ("itam", "1231"):
         return cl.User(
-            identifier="Juan", metadata={"role": "admin", "provider": "credentials"}
+            identifier="Itam", metadata={"role": "admin", "provider": "credentials"}
         )
     else:
         return None
@@ -137,7 +137,7 @@ async def start():
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    system_prompt = """Eres un bot de voz de atención al cliente. Sé conciso en tus respuestas y habla siempre en el idioma <customer_language>. """    
+    system_prompt = """Eres un bot de voz de atención y asistencia de la compañia ITAM. Sé conciso en tus respuestas y habla siempre en el idioma <customer_language>. """    
 
     cl.user_session.set("useAzureVoice", settings["useAzureVoice"])
     cl.user_session.set("Temperature", settings["Temperature"])
