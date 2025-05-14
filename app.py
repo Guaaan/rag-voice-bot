@@ -8,7 +8,7 @@ from uuid import uuid4
 from chainlit.logger import logger
 from realtime import RealtimeClient
 from azure_tts import Client as AzureTTSClient
-from tools import tools
+from tools import search_knowledge_base_handler, report_grounding_handler, tools
 voice = "es-AR-AlloyTurboMultilingualNeural"
 
 VOICE_MAPPING = {
@@ -137,8 +137,12 @@ async def start():
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    system_prompt = """Eres un bot de voz de atención y asistencia de la compañia ITAM. Sé conciso en tus respuestas y habla siempre en el idioma <customer_language>. """    
-
+    system_prompt = (
+    "Eres un asistente de voz de la compañía ITAM. "
+    "Antes de responder a cualquier pregunta, busca información relevante en la base de conocimientos interna. "
+    "Si no encuentras información relevante, indica que no tienes una respuesta basada en la base de conocimientos. "
+    "Responde siempre en el idioma español."
+    )
     cl.user_session.set("useAzureVoice", settings["useAzureVoice"])
     cl.user_session.set("Temperature", settings["Temperature"])
     cl.user_session.set("Language", settings["Language"])
@@ -154,9 +158,20 @@ async def setup_agent(settings):
 async def on_message(message: cl.Message):
     openai_realtime: RealtimeClient = cl.user_session.get("openai_realtime")
     if openai_realtime and openai_realtime.is_connected():
-        await openai_realtime.send_user_message_content([{ "type": 'input_text', "text": message.content}])
+        # Usar la nueva función de búsqueda mejorada
+        search_results = await search_knowledge_base_handler(message.content)
+        
+        # Formatear el contexto incluyendo las fuentes
+        context = f"Información relevante:\n{search_results}\n\n"
+        context += "Por favor, responde basándote en esta información y cita las fuentes usando report_grounding."
+        
+        await openai_realtime.send_user_message_content([
+            {"type": "input_text", "text": context},
+            {"type": "input_text", "text": f"Pregunta del usuario: {message.content}"}
+        ])
     else:
-        await cl.Message(content="Please activate voice mode before sending messages!").send()
+        await cl.Message(content="Por favor, activa el modo de voz antes de enviar mensajes.").send()
+
 
 @cl.on_audio_start
 async def on_audio_start():
