@@ -149,7 +149,7 @@ async def setup_agent(settings):
     app_user = cl.user_session.get("user")
     identifier = app_user.identifier if app_user else "admin"
     await cl.Message(
-        content="Hola Bienvenido al bot ITAM. Cómo puedo ayudarte?. Presiona `P` para hablar!"
+        content="Hola Bienvenido al bot conversacional de ITAM. Puedo brindarte información sobre los contactos de emergencia de algún empleado o información general de la compañía. Presiona `P` para hablar! Prueba preguntarme cual es el contacto de emergencias o la dirección de la compañía."
     ).send()
     system_prompt = system_prompt.replace("<customer_language>", settings["Language"])
     await setup_openai_realtime(system_prompt=system_prompt + "\n\n Customer ID: 12121")
