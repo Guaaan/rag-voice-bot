@@ -115,6 +115,9 @@ def auth_callback(username: str, password: str):
 
 @cl.on_chat_start
 async def start():
+    app_user = cl.user_session.get("user")
+    print("app_user", app_user)
+
     settings = await cl.ChatSettings([
         Select(
             id="Language",
@@ -195,6 +198,12 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk):
         else:
             logger.info("RealtimeClient is not connected")
 
+@cl.on_logout
+def main(request: str, response: str):
+    print("Logout")
+    print(request)
+    print(response)
+    
 @cl.on_audio_end
 @cl.on_chat_end
 @cl.on_stop
