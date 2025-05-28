@@ -81,7 +81,9 @@ def flask_auth_logout():
     return f"""
     <html>
         <body>
-            
+            <script>
+            window.location.href = "{logout_url}";
+            </script>
             <p>🔒 Sesión cerrada. Redirigiendo...</p>
         </body>
     </html>
