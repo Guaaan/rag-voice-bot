@@ -33,6 +33,7 @@ flask_app = Flask(__name__)
 auth_event = threading.Event()
 auth_result = {}
 
+
 @flask_app.route("/auth/callback")
 def flask_auth_callback():
     code = request.args.get("code")
@@ -65,10 +66,14 @@ def flask_auth_callback():
     else:
         return f"❌ Error: {token_response}", 500
 
+
 def run_flask_server():
     flask_app.run(port=8500)
 
+
 threading.Thread(target=run_flask_server, daemon=True).start()
+
+
 @flask_app.route("/auth/logout")
 def flask_auth_logout():
     auth_result.clear()
@@ -76,17 +81,25 @@ def flask_auth_logout():
     return f"""
     <html>
         <body>
-            <script>
-                 window.close();
-            </script>
+            
             <p>🔒 Sesión cerrada. Redirigiendo...</p>
         </body>
     </html>
     """
 
+
 @flask_app.route("/logout-success")
 def logout_success():
-    return "<p>✅ Has cerrado sesión correctamente.</p>"
+    return f"""
+        <body>
+            <script>
+                window.close();
+            </script>
+         
+            <p>✅ Has cerrado sesión correctamente.</p>
+        </body>
+        """
+
 
 voice = "es-AR-AlloyTurboMultilingualNeural"
 
@@ -105,17 +118,20 @@ VOICE_MAPPING = {
     "urdu": "ur-IN-AsadNeural"
 }
 
-tts_sentence_end = [ ".", "!", "?", ";", "。", "！", "？", "；", "\n", "।"]
+tts_sentence_end = [".", "!", "?", ";", "。", "！", "？", "；", "\n", "।"]
+
+
 async def setup_openai_realtime(system_prompt: str):
     """Instantiate and configure the OpenAI Realtime Client"""
-    openai_realtime = RealtimeClient(system_prompt = system_prompt)
+    openai_realtime = RealtimeClient(system_prompt=system_prompt)
     cl.user_session.set("track_id", str(uuid4()))
     voice = VOICE_MAPPING.get(cl.user_session.get("Language"))
     collected_messages = []
+
     async def handle_conversation_updated(event):
         item = event.get("item")
         delta = event.get("delta")
-        
+
         """Currently used to stream audio back to the client."""
         if delta:
             # Only one of the following will be populated for any given event
@@ -127,36 +143,39 @@ async def setup_openai_realtime(system_prompt: str):
                 if cl.user_session.get("useAzureVoice"):
                     chunk_message = delta['transcript']
                     if item["status"] == "in_progress":
-                        collected_messages.append(chunk_message)  # save the message
-                        if chunk_message in tts_sentence_end: # sentence end found
-                            sent_transcript = ''.join(collected_messages).strip()
+                        collected_messages.append(
+                            chunk_message)  # save the message
+                        if chunk_message in tts_sentence_end:  # sentence end found
+                            sent_transcript = ''.join(
+                                collected_messages).strip()
                             collected_messages.clear()
-                            chunk = await AzureTTSClient.text_to_speech_realtime(text=sent_transcript, voice= voice)
+                            chunk = await AzureTTSClient.text_to_speech_realtime(text=sent_transcript, voice=voice)
                             await cl.context.emitter.send_audio_chunk(cl.OutputAudioChunk(mimeType="audio/wav", data=chunk, track=cl.user_session.get("track_id")))
             if 'arguments' in delta:
-                arguments = delta['arguments']  # string, function arguments added
+                # string, function arguments added
+                arguments = delta['arguments']
                 pass
-    
+
     async def handle_item_completed(item):
         """Generate the transcript once an item is completed and populate the chat context."""
         try:
             transcript = item['item']['formatted']['transcript']
             if transcript.strip() != "":
-                await cl.Message(content=transcript).send()      
-                
+                await cl.Message(content=transcript).send()
+
         except Exception as e:
             logger.error(f"Failed to generate transcript: {e}")
             logger.error(traceback.format_exc())
-    
+
     async def handle_conversation_interrupt(event):
         """Used to cancel the client previous audio playback."""
         cl.user_session.set("track_id", str(uuid4()))
         try:
             collected_messages.clear()
         except Exception as e:
-            logger.error(f"Failed to clear collected messages: {e}")    
+            logger.error(f"Failed to clear collected messages: {e}")
         await cl.context.emitter.send_audio_interrupt()
-        
+
     async def handle_input_audio_transcription_completed(event):
         item = event.get("item")
         delta = event.get("delta")
@@ -164,21 +183,24 @@ async def setup_openai_realtime(system_prompt: str):
             transcript = delta['transcript']
             if transcript != "":
                 await cl.Message(author="You", type="user_message", content=transcript).send()
-        
+
     async def handle_error(event):
         logger.error(event)
-        
-    
+
     openai_realtime.on('conversation.updated', handle_conversation_updated)
     openai_realtime.on('conversation.item.completed', handle_item_completed)
-    openai_realtime.on('conversation.interrupted', handle_conversation_interrupt)
-    openai_realtime.on('conversation.item.input_audio_transcription.completed', handle_input_audio_transcription_completed)
+    openai_realtime.on('conversation.interrupted',
+                       handle_conversation_interrupt)
+    openai_realtime.on('conversation.item.input_audio_transcription.completed',
+                       handle_input_audio_transcription_completed)
     openai_realtime.on('error', handle_error)
 
     cl.user_session.set("openai_realtime", openai_realtime)
-    #cl.user_session.set("tts_client", tts_client)
-    coros = [openai_realtime.add_tool(tool_def, tool_handler) for tool_def, tool_handler in tools]
+    # cl.user_session.set("tts_client", tts_client)
+    coros = [openai_realtime.add_tool(tool_def, tool_handler)
+             for tool_def, tool_handler in tools]
     await asyncio.gather(*coros)
+
 
 @cl.password_auth_callback
 def auth_callback(username: str, password: str):
@@ -203,7 +225,8 @@ def auth_callback(username: str, password: str):
     else:
         print("⛔ Timeout o fallo de autenticación.")
         return None
-    
+
+
 @cl.on_chat_start
 async def start():
     app_user = cl.user_session.get("user")
@@ -232,10 +255,10 @@ async def start():
 @cl.on_settings_update
 async def setup_agent(settings):
     system_prompt = (
-    "Eres un asistente de voz de la compañía ITAM. "
-    "Antes de responder a cualquier pregunta, busca información relevante en la base de conocimientos interna. "
-    "Si no encuentras información relevante, indica que no tienes una respuesta basada en la base de conocimientos. "
-    "Responde siempre en el idioma español."
+        "Eres un asistente de voz de la compañía ITAM. "
+        "Antes de responder a cualquier pregunta, busca información relevante en la base de conocimientos interna. "
+        "Si no encuentras información relevante, indica que no tienes una respuesta basada en la base de conocimientos. "
+        "Responde siempre en el idioma español."
     )
     cl.user_session.set("useAzureVoice", settings["useAzureVoice"])
     cl.user_session.set("Temperature", settings["Temperature"])
@@ -245,9 +268,10 @@ async def setup_agent(settings):
     await cl.Message(
         content="Hola Bienvenido al bot conversacional de ITAM. Puedo brindarte información sobre los contactos de emergencia de algún empleado o información general de la compañía. Presiona `P` para hablar! Prueba preguntarme cual es el contacto de emergencias o la dirección de la compañía."
     ).send()
-    system_prompt = system_prompt.replace("<customer_language>", settings["Language"])
+    system_prompt = system_prompt.replace(
+        "<customer_language>", settings["Language"])
     await setup_openai_realtime(system_prompt=system_prompt + "\n\n Customer ID: 12121")
-    
+
 
 @cl.on_message
 async def on_message(message: cl.Message):
@@ -255,11 +279,11 @@ async def on_message(message: cl.Message):
     if openai_realtime and openai_realtime.is_connected():
         # Usar la nueva función de búsqueda mejorada
         search_results = await search_knowledge_base_handler(message.content)
-        
+
         # Formatear el contexto incluyendo las fuentes
         context = f"Información relevante:\n{search_results}\n\n"
         context += "Por favor, responde basándote en esta información y cita las fuentes usando report_grounding."
-        
+
         await openai_realtime.send_user_message_content([
             {"type": "input_text", "text": context},
             {"type": "input_text", "text": f"Pregunta del usuario: {message.content}"}
@@ -267,10 +291,12 @@ async def on_message(message: cl.Message):
     else:
         await cl.Message(content="Por favor, activa el modo de voz antes de enviar mensajes.").send()
 
+
 @cl.on_audio_start
 async def on_audio_start():
     try:
-        openai_realtime: RealtimeClient = cl.user_session.get("openai_realtime")
+        openai_realtime: RealtimeClient = cl.user_session.get(
+            "openai_realtime")
         # TODO: might want to recreate items to restore context
         # openai_realtime.create_conversation_item(item)
         await openai_realtime.connect()
@@ -280,21 +306,25 @@ async def on_audio_start():
         await cl.ErrorMessage(content=f"Failed to connect to OpenAI realtime: {e}").send()
         return False
 
+
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.InputAudioChunk):
     openai_realtime: RealtimeClient = cl.user_session.get("openai_realtime")
-    if openai_realtime:            
+    if openai_realtime:
         if openai_realtime.is_connected():
             await openai_realtime.append_input_audio(chunk.data)
         else:
             logger.info("RealtimeClient is not connected")
 
+
 @cl.on_logout
 def on_logout(request: str, response: str):
     print("🔓 Cerrando sesión local y remota")
     auth_result.clear()  # Limpiar token local
-    webbrowser.open("http://localhost:8500/auth/logout")  # Opcional: cierre en Azure AD
-    
+    # Opcional: cierre en Azure AD
+    webbrowser.open("http://localhost:8500/auth/logout")
+
+
 @cl.on_audio_end
 @cl.on_chat_end
 @cl.on_stop
