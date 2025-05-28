@@ -9,6 +9,85 @@ from chainlit.logger import logger
 from realtime import RealtimeClient
 from azure_tts import Client as AzureTTSClient
 from tools import search_knowledge_base_handler, report_grounding_handler, tools
+from msal import ConfidentialClientApplication
+from flask import Flask, request
+import threading
+import webbrowser
+import time
+
+REDIRECT_URI = "http://localhost:8500/auth/callback"
+SCOPES = ["User.Read"]
+
+AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
+AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID")
+AZURE_CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET")
+AUTHORITY = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}"
+
+msal_app = ConfidentialClientApplication(
+    AZURE_CLIENT_ID,
+    authority=AUTHORITY,
+    client_credential=AZURE_CLIENT_SECRET
+)
+
+flask_app = Flask(__name__)
+auth_event = threading.Event()
+auth_result = {}
+
+@flask_app.route("/auth/callback")
+def flask_auth_callback():
+    code = request.args.get("code")
+    if not code:
+        return "Código de autorización no recibido.", 400
+
+    token_response = msal_app.acquire_token_by_authorization_code(
+        code,
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+
+    if "access_token" in token_response:
+        auth_result["user"] = {
+            "username": token_response.get("id_token_claims", {}).get("preferred_username"),
+            "access_token": token_response["access_token"]
+        }
+        auth_event.set()  # Notificamos a Chainlit que ya tenemos el token
+        # Devuelve HTML que cierra la pestaña automáticamente
+        return """
+        <html>
+            <body>
+                <script>
+                    window.close();
+                </script>
+                <p>✅ Autenticación exitosa. Puedes cerrar esta pestaña.</p>
+            </body>
+        </html>
+        """
+    else:
+        return f"❌ Error: {token_response}", 500
+
+def run_flask_server():
+    flask_app.run(port=8500)
+
+threading.Thread(target=run_flask_server, daemon=True).start()
+@flask_app.route("/auth/logout")
+def flask_auth_logout():
+    auth_result.clear()
+    logout_url = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/logout?post_logout_redirect_uri=http://localhost:8500/logout-success"
+    return f"""
+    <html>
+        <body>
+            <script>
+                 window.close();
+            </script>
+            <p>🔒 Sesión cerrada. Redirigiendo...</p>
+        </body>
+    </html>
+    """
+
+@flask_app.route("/logout-success")
+def logout_success():
+    return "<p>✅ Has cerrado sesión correctamente.</p>"
+
 voice = "es-AR-AlloyTurboMultilingualNeural"
 
 VOICE_MAPPING = {
@@ -100,19 +179,31 @@ async def setup_openai_realtime(system_prompt: str):
     #cl.user_session.set("tts_client", tts_client)
     coros = [openai_realtime.add_tool(tool_def, tool_handler) for tool_def, tool_handler in tools]
     await asyncio.gather(*coros)
-    
 
 @cl.password_auth_callback
 def auth_callback(username: str, password: str):
-    # Fetch the user matching username from your database
-    # and compare the hashed password with the value stored in the database
-    if (username, password) == ("itam", "1231"):
+    auth_event.clear()
+    auth_url = msal_app.get_authorization_request_url(
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+    print(f"🔗 Abriendo navegador para autenticación: {auth_url}")
+    webbrowser.open(auth_url)
+
+    if auth_event.wait(timeout=120):  # Esperamos a que Flask guarde el token
+        token_data = auth_result["user"]
         return cl.User(
-            identifier="Itam", metadata={"role": "admin", "provider": "credentials"}
+            identifier=token_data["username"],
+            metadata={
+                "role": "admin",
+                "provider": "azure_entra_id",
+                "token": token_data["access_token"]
+            }
         )
     else:
+        print("⛔ Timeout o fallo de autenticación.")
         return None
-
+    
 @cl.on_chat_start
 async def start():
     app_user = cl.user_session.get("user")
@@ -157,6 +248,7 @@ async def setup_agent(settings):
     system_prompt = system_prompt.replace("<customer_language>", settings["Language"])
     await setup_openai_realtime(system_prompt=system_prompt + "\n\n Customer ID: 12121")
     
+
 @cl.on_message
 async def on_message(message: cl.Message):
     openai_realtime: RealtimeClient = cl.user_session.get("openai_realtime")
@@ -174,7 +266,6 @@ async def on_message(message: cl.Message):
         ])
     else:
         await cl.Message(content="Por favor, activa el modo de voz antes de enviar mensajes.").send()
-
 
 @cl.on_audio_start
 async def on_audio_start():
@@ -199,10 +290,10 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk):
             logger.info("RealtimeClient is not connected")
 
 @cl.on_logout
-def main(request: str, response: str):
-    print("Logout")
-    print(request)
-    print(response)
+def on_logout(request: str, response: str):
+    print("🔓 Cerrando sesión local y remota")
+    auth_result.clear()  # Limpiar token local
+    webbrowser.open("http://localhost:8500/auth/logout")  # Opcional: cierre en Azure AD
     
 @cl.on_audio_end
 @cl.on_chat_end
