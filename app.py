@@ -205,7 +205,7 @@ async def setup_openai_realtime(system_prompt: str):
 
 
 @cl.password_auth_callback
-def auth_callback(username: str, password: str):
+def password_auth_callback(username: str, password: str):
     auth_event.clear()
     auth_url = msal_app.get_authorization_request_url(
         scopes=SCOPES,
@@ -214,16 +214,21 @@ def auth_callback(username: str, password: str):
     print(f"🔗 Abriendo navegador para autenticación: {auth_url}")
     webbrowser.open(auth_url)
 
-    if auth_event.wait(timeout=120):  # Esperamos a que Flask guarde el token
-        token_data = auth_result["user"]
-        return cl.User(
-            identifier=token_data["username"],
-            metadata={
-                "role": "admin",
-                "provider": "azure_entra_id",
-                "token": token_data["access_token"]
-            }
-        )
+
+    if auth_event.wait(timeout=120):
+        token_data = auth_result.get("user")
+        if token_data and "access_token" in token_data:
+            return cl.User(
+                identifier=token_data["username"],
+                metadata={
+                    "role": "user",
+                    "provider": "azure_entra_id",
+                    "token": token_data["access_token"]
+                }
+            )
+        else:
+            print("⛔ No se recibió token válido.")
+            return None
     else:
         print("⛔ Timeout o fallo de autenticación.")
         return None
