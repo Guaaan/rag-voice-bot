@@ -15,7 +15,7 @@ import threading
 import webbrowser
 import time
 
-REDIRECT_URI = "http://localhost:8500/auth/callback"
+REDIRECT_URI = os.environ.get("REDIRECT_URI")
 SCOPES = ["User.Read"]
 
 AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
