@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from msal import ConfidentialClientApplication
 import threading
 from dotenv import load_dotenv
-load_dotenv.load_dotenv()
+load_dotenv()
 
 app = Flask(__name__)
 

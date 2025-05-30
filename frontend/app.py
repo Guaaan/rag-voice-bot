@@ -5,7 +5,7 @@ import requests
 import webbrowser
 from typing import Optional
 from dotenv import load_dotenv
-load_dotenv.load_dotenv()
+load_dotenv()
 
 BACKEND_URL = "http://localhost:8500"
 
