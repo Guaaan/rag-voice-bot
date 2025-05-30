@@ -4,7 +4,7 @@ import asyncio
 import requests
 import webbrowser
 from typing import Optional
-import load_dotenv
+from dotenv import load_dotenv
 load_dotenv.load_dotenv()
 
 BACKEND_URL = "http://localhost:8500"

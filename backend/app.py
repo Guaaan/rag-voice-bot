@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from msal import ConfidentialClientApplication
 import threading
-import load_dotenv
+from dotenv import load_dotenv
 load_dotenv.load_dotenv()
 
 app = Flask(__name__)
